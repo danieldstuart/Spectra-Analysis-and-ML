@@ -15,6 +15,8 @@ package.check <- lapply(
 setwd("~/")
 setwd("~/R/Spectra Analysis and ML/Place Data Here") #make sure your data is placed in the correct folder separated into folders by class
 
+#foldernum <- readline(prompt="How many data folders/classes do you have? ")
+#foldernum <- as.integer(foldernum)
 foldernum = 6 #sets the number of folders to pull from, the number of classes
 folders <- list.files(full.names = T, include.dirs = T) #pulls out all of the folder names
 classes <- sub("..", "", folders) #create class column to append to data
@@ -39,6 +41,10 @@ classifier <- as.factor(classifier) #converts classes to factors
 ## Select mass range of interest
 minmass <- 500
 maxmass <- 2400
+#minmass <- readline(prompt="Enter minimum m/z value: ")
+#minmass <- as.integer(minmass)
+#maxmass <- readline(prompt="Enter maximum m/z value: ")
+#maxmass <- as.integer(maxmass)
 
 ## Process and align all the spectra
 spectra <- smoothIntensity(s, method="MovingAverage", halfWindowSize=2)
@@ -67,7 +73,7 @@ dataset <- data.frame(imatrix, classifier, stringsAsFactors = TRUE)
 datasetsave <- dataset
 
 ## Split data into training(dataset) and testing(validation)
-validation_index <- createDataPartition(dataset$classifier, p=0.90, list=FALSE)
+validation_index <- createDataPartition(dataset$classifier, p=0.70, list=FALSE)
 validation <- dataset[-validation_index,]
 dataset <- dataset[validation_index,]
 
@@ -130,7 +136,7 @@ lda_predict <- predict(lda_model)
 # Plots LDA results
 ggplot(cbind(datasetsave, lda_predict$x),
        aes(y = LD1, x = LD2, colour = classifier)) + 
-  stat_ellipse(aes(fill = classifier), geom = "polygon", alpha = .3) +
+  stat_ellipse(aes(fill = classifier), geom = "polygon", alpha = .2, level = 0.99) +
   geom_point() +
   ggtitle("LDA") +
   theme(legend.position = "right")
@@ -143,7 +149,7 @@ lda_val_predict <- predict(object = lda_model, newdata = val)
 # Plots LDA results with blind
 ggplot(cbind(datasetsave, lda_predict$x), 
        aes(y = LD1, x = LD2, colour = classifier)) +
-    stat_ellipse(aes(fill = classifier), geom = "polygon", alpha = .3) +
+    stat_ellipse(aes(fill = classifier), geom = "polygon", alpha = .3, level = 0.99) +
     geom_point() +
     geom_point(data = cbind(val, lda_val_predict$x), colour = "black") +
     ggtitle("LDA") +
@@ -153,23 +159,14 @@ ggplot(cbind(datasetsave, lda_predict$x),
 pdf(paste("LDA", "results.pdf"), width = 7, height = 7, onefile = FALSE)
 ggplot(cbind(datasetsave, lda_prediction$x),
        aes(y = LD1, x = LD2, colour = classifier)) +
-  stat_ellipse(aes(fill = classifier), geom = "polygon", alpha = .3) +
+  stat_ellipse(aes(fill = classifier), geom = "polygon", alpha = .2, level = 0.99) +
   geom_point() +
   ggtitle("LDA") +
   theme(legend.position = "right")
 dev.off()
 
-# Plotting with plotly
+## Plotting with plotly
 library(plotly)
-
-p <- ggplot(cbind(datasetsave, lda_predict$x),
-       aes(y = LD1, x = LD2, z = LD3, colour = classifier)) + 
-  stat_ellipse(aes(fill = classifier), geom = "polygon", alpha = .3) +
-  geom_point() +
-  ggtitle("LDA") +
-  theme(legend.position = "right")
-
-ggplotly(p)
 
 # Setting up lda data for plotly
 lda_data <- cbind(datasetsave, lda_predict$x)
@@ -197,8 +194,8 @@ axz <- list(title = "LD3")
 
 # Plotly figure
 fig <- plot_ly(lda_dat, x = LD2, y = LD1, z = LD3, type="scatter3d", mode="markers", color=classifier, size=3)%>%
-  layout(title = list(text = "Bacteria LDA", font = t1, y = 0.95), scene = list(xaxis=axx,yaxis=axy,zaxis=axz), legend = list(title = list(text = "Bacteria Species"), font = t2))
-
+  layout(title = list(text = "Bacterial Species LDA", font = t1, y = 0.95), scene = list(xaxis=axx,yaxis=axy,zaxis=axz), legend = list(title = list(text = "Species"), font = t2))
+# Plot
 fig
 
 setwd("~/")
